@@ -10,79 +10,167 @@ namespace SimpleCalculator
     public class Calculator
     {
         private int counter = 0;
+        private int value1, value2;
+        private string constant;
+        private int constantValue;
+
+        public int Value1
+        {
+            get { return value1; }
+        }
+
+        public int Value2
+        {
+            get { return value2; }
+        }
+        
         public List<string> Inputs;
         public Dictionary<char, int> Constants;
 
-        public Calculator() { }
+        public Calculator()
+        {
+            
+        }
 
         public int GetCounter()
         {
             return this.counter;
         }
 
-        public void GetInput()
+        public void RunCalculator()
         {
+            int actionCode;
+            string lastInput = "", input;
+            int lastAnswer = 0, answer = 0;
+            
+            do
+            {
+                input = GetInput();
+                actionCode = ValidateInput(input);
+                switch (actionCode)
+                {
+                    case 0: // exit or quit
+                        Console.WriteLine("Bye!");
+                        break;
+                    case 1: // last
+                        Console.WriteLine("Last answer = {0}", lastAnswer);
+                        break;
+                    case 2: // lastq
+                        Console.WriteLine("Last expression = {0}", lastInput);
+                        break;
+                    case 3: // addition
+                        answer = this.value1 + this.value2;
+                        Console.WriteLine("  = {0}", answer);
+                        break;
+                    case 4: // subtraction
+                        answer = this.value1 - this.value2;
+                        Console.WriteLine("  = {0}", answer);
+                        break;
+                    case 5: // multiplication
+                        answer = this.value1 * this.value2;
+                        Console.WriteLine("  = {0}", answer);
+                        break;
+                    case 6: // division
+                        answer = this.value1 / this.value2;
+                        Console.WriteLine("  = {0}", answer);
+                        break;
+                    case 7: // modulus
+                        answer = this.value1 % this.value2;
+                        Console.WriteLine("  = {0}", answer);
+                        break;
+                    case 8:
+                        // assign constant
+                        break;
 
+                }
+                
+                // if actionCode = math code, then save answer to lastAnswer
+                if (actionCode >= 3 && actionCode <= 7)
+                {
+                    lastAnswer = answer;
+                    lastInput = input;
+                }
+                
+            } while (actionCode != 0);
+
+
+        }
+
+        private string GetInput()
+        {
             Console.Write("[{0}]> ", GetCounter());
             string currentInput = Console.ReadLine();
+            return currentInput;
+        }
 
-            //char[] operations = { '+', '-', '*', '/', '%' };
-            //string[] operands = currentInput.Split(operations);
-            //int op1 = int.Parse(operands[0]);
-            //int op2 = int.Parse(operands[1]);
+        private int ValidateInput(string currentInput)
+        {
+            int actionCode = -1;
 
-            //Console.WriteLine("{0}  {1}  {2}", op1, "+", op2);
-            
+            String mathPattern = @"(\d+)\s*([-+*/%])\s*(\d+)";
+            String keywordPattern = @"\bexit\b|\bquit\b|\blast\b|\blastq\b";
+            String constantPattern = @"([a-zA-Z])\s*([=])\s*(\d+)";
 
-            String pattern = @"(\d+)\s+([-+*/%])\s+(\d+)";
-            String keywords = @"\bexit\b|\bquit\b";
-            Match match = Regex.Match(currentInput, pattern);
-            Match keywordMatch = Regex.Match(currentInput, keywords);
+            Match mathMatch = Regex.Match(currentInput, mathPattern);
+            Match keywordMatch = Regex.Match(currentInput, keywordPattern);
+            Match constantMatch = Regex.Match(currentInput, constantPattern);
 
+            string keyword = keywordMatch.Groups[0].Value;
             if (keywordMatch.Success)
             {
-                switch (keywordMatch.Groups[0].Value)
+                switch (keyword)
                 {
                     case "exit":
-                        Console.WriteLine("Exit");
-                        break;
                     case "quit":
-                        Console.WriteLine("Quit");
+                        actionCode = 0;
+                        break;
+                    case "last":
+                        actionCode = 1;
+                        break;
+                    case "lastq":
+                        actionCode = 2;
                         break;
                 }
-                Console.ReadLine();
             }
-
-            if (match.Success)
+            else if (mathMatch.Success)
             {
 
-                int value1 = Int32.Parse(match.Groups[1].Value);
-                int value2 = Int32.Parse(match.Groups[3].Value);
-                switch (match.Groups[2].Value)
+                this.value1 = Int32.Parse(mathMatch.Groups[1].Value);
+                this.value2 = Int32.Parse(mathMatch.Groups[3].Value);
+                string operation = mathMatch.Groups[2].Value;
+
+                switch (operation)
                 {
                     case "+":
-                        Console.WriteLine("{0} + {1}", value1, value2);
+                        actionCode = 3;
                         break;
                     case "-":
-                        Console.WriteLine("{0} - {1}", value1, value2);
+                        actionCode = 4;
                         break;
                     case "*":
-                        Console.WriteLine("{0} * {1}", value1, value2);
+                        actionCode = 5;
                         break;
                     case "/":
-                        Console.WriteLine("{0} / {1}", value1, value2);
+                        actionCode = 6;
                         break;
                     case "%":
-                        Console.WriteLine("{0} / {1}", value1, value2);
+                        actionCode = 7;
                         break;
                 }
-                Console.ReadLine();
+            }
+            else if (constantMatch.Success)
+            {
+                this.constant = constantMatch.Groups[1].Value;
+                this.constantValue = int.Parse(constantMatch.Groups[3].Value);
+                actionCode = 8;
             }
             else
             {
                 Console.WriteLine("Not a valid expression");
+                //Console.ReadLine();
             }
-
+            this.counter++;
+            return actionCode;
 
         }
     }
