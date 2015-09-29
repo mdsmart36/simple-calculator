@@ -14,6 +14,11 @@ namespace SimpleCalculator
         private string constant;
         private int constantValue;
 
+        enum Action
+        {
+            EXIT, LAST, LASTQ, ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULUS, CONSTANT
+        }
+
         public int Value1
         {
             get { return value1; }
@@ -23,7 +28,7 @@ namespace SimpleCalculator
         {
             get { return value2; }
         }
-        
+
         public List<string> Inputs;
         public Dictionary<char, int> Constants;
 
@@ -53,30 +58,30 @@ namespace SimpleCalculator
                         Console.WriteLine("Bye!");
                         break;
                     case 1: // last
-                        Console.WriteLine("Last answer = {0}", lastAnswer);
+                        Console.WriteLine(Print("Last answer", lastAnswer));
                         break;
                     case 2: // lastq
-                        Console.WriteLine("Last expression = {0}", lastInput);
+                        Console.WriteLine(Print("Last expression", lastInput));
                         break;
                     case 3: // addition
                         answer = this.value1 + this.value2;
-                        Console.WriteLine("  = {0}", answer);
+                        Print("", answer);
                         break;
                     case 4: // subtraction
                         answer = this.value1 - this.value2;
-                        Console.WriteLine("  = {0}", answer);
+                        Console.WriteLine(Print("", answer));
                         break;
                     case 5: // multiplication
                         answer = this.value1 * this.value2;
-                        Console.WriteLine("  = {0}", answer);
+                        Console.WriteLine(Print("", answer));
                         break;
                     case 6: // division
                         answer = this.value1 / this.value2;
-                        Console.WriteLine("  = {0}", answer);
+                        Console.WriteLine(Print("", answer));
                         break;
                     case 7: // modulus
                         answer = this.value1 % this.value2;
-                        Console.WriteLine("  = {0}", answer);
+                        Console.WriteLine(Print("", answer));
                         break;
                     case 8:
                         // assign constant
@@ -96,14 +101,24 @@ namespace SimpleCalculator
 
         }
 
-        private string GetInput()
+        public string Print(string message, string answer)
+        {
+            return String.Format("{0} = {1}", message, answer);
+        }
+
+        public string Print(string message, int answer)
+        {
+            return String.Format("{0} = {1}", message, answer);
+        }
+
+        public string GetInput()
         {
             Console.Write("[{0}]> ", GetCounter());
             string currentInput = Console.ReadLine();
             return currentInput;
         }
 
-        private int ValidateInput(string currentInput)
+        public int ValidateInput(string currentInput)
         {
             int actionCode = -1;
 
@@ -167,7 +182,6 @@ namespace SimpleCalculator
             else
             {
                 Console.WriteLine("Not a valid expression");
-                //Console.ReadLine();
             }
             this.counter++;
             return actionCode;

@@ -11,8 +11,6 @@ namespace SimpleCalculator
         static void Main(string[] args)
         {
             Calculator myCalculator = new Calculator();
-            //myCalculator.Inputs = new List<string>();
-            //myCalculator.Constants = new Dictionary<char, int>();
             myCalculator.RunCalculator();
         }
     }
