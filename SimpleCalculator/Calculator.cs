@@ -11,12 +11,12 @@ namespace SimpleCalculator
     {
         private int counter = 0;
         private int value1, value2;
-        private string constant;
+        private string constantKey;
         private int constantValue;
 
-        enum Action
+        public enum Action
         {
-            EXIT, LAST, LASTQ, ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULUS, CONSTANT
+            INVALID = -1, EXIT, LAST, LASTQ, ADD, SUBTRACT, MULTIPLY, DIVIDE, MODULUS, CONSTANT_ASSIGN, CONSTANT_LOOKUP, CONSTANT_USE, CONSTANT_ERROR, CONSTANT_NOTASSIGNED
         }
 
         public int Value1
@@ -30,11 +30,11 @@ namespace SimpleCalculator
         }
 
         public List<string> Inputs;
-        public Dictionary<char, int> Constants;
+        public Dictionary<string, int> Constants;
 
         public Calculator()
         {
-            
+            this.Constants = new Dictionary<string, int>();   
         }
 
         public int GetCounter()
@@ -44,7 +44,7 @@ namespace SimpleCalculator
 
         public void RunCalculator()
         {
-            int actionCode;
+            Action actionCode;
             string lastInput = "", input;
             int lastAnswer = 0, answer = 0;
             
@@ -52,53 +52,73 @@ namespace SimpleCalculator
             {
                 input = GetInput();
                 actionCode = ValidateInput(input);
-                switch (actionCode)
-                {
-                    case 0: // exit or quit
-                        Console.WriteLine("Bye!");
-                        break;
-                    case 1: // last
-                        Console.WriteLine(Print("Last answer", lastAnswer));
-                        break;
-                    case 2: // lastq
-                        Console.WriteLine(Print("Last expression", lastInput));
-                        break;
-                    case 3: // addition
-                        answer = this.value1 + this.value2;
-                        Print("", answer);
-                        break;
-                    case 4: // subtraction
-                        answer = this.value1 - this.value2;
-                        Console.WriteLine(Print("", answer));
-                        break;
-                    case 5: // multiplication
-                        answer = this.value1 * this.value2;
-                        Console.WriteLine(Print("", answer));
-                        break;
-                    case 6: // division
-                        answer = this.value1 / this.value2;
-                        Console.WriteLine(Print("", answer));
-                        break;
-                    case 7: // modulus
-                        answer = this.value1 % this.value2;
-                        Console.WriteLine(Print("", answer));
-                        break;
-                    case 8:
-                        // assign constant
-                        break;
-
-                }
+                DoAnAction(actionCode, lastAnswer, lastInput, out answer);
                 
                 // if actionCode = math code, then save answer to lastAnswer
-                if (actionCode >= 3 && actionCode <= 7)
+                if (actionCode >= Action.ADD && actionCode <= Action.MODULUS)
                 {
                     lastAnswer = answer;
                     lastInput = input;
                 }
                 
-            } while (actionCode != 0);
+            } while (actionCode != Action.EXIT);
 
 
+        }
+
+        private void DoAnAction(Action actionCode, int lastAnswer, string lastInput, out int answer)
+        {
+            answer = 0;
+            switch (actionCode)
+            {
+                case Action.EXIT: // exit or quit
+                    Console.WriteLine("Bye!");
+                    break;
+                case Action.LAST: // last
+                    Console.WriteLine(Print("Last answer", lastAnswer));
+                    break;
+                case Action.LASTQ: // lastq
+                    Console.WriteLine(Print("Last expression", lastInput));
+                    break;
+                case Action.ADD: // addition
+                    answer = this.value1 + this.value2;
+                    Console.WriteLine(Print("", answer));
+                    break;
+                case Action.SUBTRACT: // subtraction
+                    answer = this.value1 - this.value2;
+                    Console.WriteLine(Print("", answer));
+                    break;
+                case Action.MULTIPLY: // multiplication
+                    answer = this.value1 * this.value2;
+                    Console.WriteLine(Print("", answer));
+                    break;
+                case Action.DIVIDE: // division
+                    answer = this.value1 / this.value2;
+                    Console.WriteLine(Print("", answer));
+                    break;
+                case Action.MODULUS: // modulus
+                    answer = this.value1 % this.value2;
+                    Console.WriteLine(Print("", answer));
+                    break;
+                case Action.CONSTANT_ASSIGN:
+                    // assign constant
+                    Constants.Add(constantKey, constantValue);
+                    Console.WriteLine("  = saved '{0}' as '{1}'", constantKey, constantValue.ToString());
+                    break;
+                case Action.CONSTANT_LOOKUP:
+                    // lookup constant value
+                    Console.WriteLine(" = {0}", constantValue);
+                    break;
+                case Action.CONSTANT_ERROR:
+                    // error trying to assign new value to a constant
+                    Console.WriteLine("Error! Cannot re-assign constant.");
+                    break;
+                case Action.CONSTANT_NOTASSIGNED:
+                    // error, trying to lookup value which has not been assigned
+                    Console.WriteLine("Error! Constant has not been assigned a value;");
+                    break;
+            }
+            
         }
 
         public string Print(string message, string answer)
@@ -118,17 +138,29 @@ namespace SimpleCalculator
             return currentInput;
         }
 
-        public int ValidateInput(string currentInput)
+        public Action ValidateInput(string currentInput)
         {
-            int actionCode = -1;
+            Action actionCode = Action.INVALID;
+            Match mathMatch;
+            Match keywordMatch;
+            Match constantMatch;
+            Match constantLookupMatch;
+            Match constantUseMatch1;
+            Match constantUseMatch2;
 
             String mathPattern = @"(\d+)\s*([-+*/%])\s*(\d+)";
             String keywordPattern = @"\bexit\b|\bquit\b|\blast\b|\blastq\b";
-            String constantPattern = @"([a-zA-Z])\s*([=])\s*(\d+)";
+            String constantAssignPattern = @"([a-zA-Z])\s*([=])\s*(\d+)";
+            String constantLookupPattern = @"^\s*([a-zA-Z])\s*$";
+            String constantUsePattern1 = @"(\d+)\s*([-+*/%])\s*([a-zA-Z])";
+            String constantUsePattern2 = @"([a-zA-Z])\s*([-+*/%])\s*(\d+)";
 
-            Match mathMatch = Regex.Match(currentInput, mathPattern);
-            Match keywordMatch = Regex.Match(currentInput, keywordPattern);
-            Match constantMatch = Regex.Match(currentInput, constantPattern);
+            mathMatch = Regex.Match(currentInput, mathPattern);
+            keywordMatch = Regex.Match(currentInput, keywordPattern);
+            constantMatch = Regex.Match(currentInput, constantAssignPattern);
+            constantLookupMatch = Regex.Match(currentInput, constantLookupPattern);
+            constantUseMatch1 = Regex.Match(currentInput, constantUsePattern1);
+            constantUseMatch2 = Regex.Match(currentInput, constantUsePattern2);
 
             string keyword = keywordMatch.Groups[0].Value;
             if (keywordMatch.Success)
@@ -137,13 +169,13 @@ namespace SimpleCalculator
                 {
                     case "exit":
                     case "quit":
-                        actionCode = 0;
+                        actionCode = Action.EXIT;
                         break;
                     case "last":
-                        actionCode = 1;
+                        actionCode = Action.LAST;
                         break;
                     case "lastq":
-                        actionCode = 2;
+                        actionCode = Action.LASTQ;
                         break;
                 }
             }
@@ -157,27 +189,120 @@ namespace SimpleCalculator
                 switch (operation)
                 {
                     case "+":
-                        actionCode = 3;
+                        actionCode = Action.ADD;
                         break;
                     case "-":
-                        actionCode = 4;
+                        actionCode = Action.SUBTRACT;
                         break;
                     case "*":
-                        actionCode = 5;
+                        actionCode = Action.MULTIPLY;
                         break;
                     case "/":
-                        actionCode = 6;
+                        actionCode = Action.DIVIDE;
                         break;
                     case "%":
-                        actionCode = 7;
+                        actionCode = Action.MODULUS;
                         break;
                 }
             }
             else if (constantMatch.Success)
             {
-                this.constant = constantMatch.Groups[1].Value;
-                this.constantValue = int.Parse(constantMatch.Groups[3].Value);
-                actionCode = 8;
+                this.constantKey = constantMatch.Groups[1].Value;
+                if (Constants.ContainsKey(constantKey))
+                {   
+                    actionCode = Action.CONSTANT_ERROR;
+                }
+                else
+                {
+                    this.constantValue = int.Parse(constantMatch.Groups[3].Value);
+                    actionCode = Action.CONSTANT_ASSIGN;
+                }
+                
+            }
+            else if (constantLookupMatch.Success)
+            {
+                // check for error, i.e., value not in dictionary
+                this.constantKey = constantLookupMatch.Groups[1].Value;
+                if (!Constants.ContainsKey(constantKey))
+                {
+                    actionCode = Action.CONSTANT_NOTASSIGNED;
+                }
+                else
+                {
+                    //Console.WriteLine("Inside constantLookup");
+                    this.constantValue = Constants[constantKey];
+                    actionCode = Action.CONSTANT_LOOKUP;
+                }
+                
+            }
+            else if (constantUseMatch1.Success)
+            {
+                // e.g., 1 + x
+                this.constantKey = constantUseMatch1.Groups[3].Value;
+                if (!Constants.ContainsKey(constantKey))
+                {
+                    actionCode = Action.CONSTANT_NOTASSIGNED;
+                }
+                else
+                {
+                    this.value1 = int.Parse(constantUseMatch1.Groups[1].Value);
+                    this.value2 = Constants[constantKey];
+                    switch (constantUseMatch1.Groups[2].Value)
+                    {
+                        case "+":
+                            actionCode = Action.ADD;
+                            break;
+                        case "-":
+                            actionCode = Action.SUBTRACT;
+                            break;
+                        case "*":
+                            actionCode = Action.MULTIPLY;
+                            break;
+                        case "/":
+                            actionCode = Action.DIVIDE;
+                            break;
+                        case "%":
+                            actionCode = Action.MODULUS;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            else if (constantUseMatch2.Success)
+            {
+                // e.g., x + 1
+                Console.WriteLine("Inside constantUseMatch2");
+                this.constantKey = constantUseMatch2.Groups[1].Value;
+                if (!Constants.ContainsKey(constantKey))
+                {
+                    actionCode = Action.CONSTANT_NOTASSIGNED;
+                }
+                else
+                {
+                    this.value2 = int.Parse(constantUseMatch1.Groups[1].Value);
+                    this.value1 = Constants[constantKey];
+                    switch (constantUseMatch1.Groups[2].Value)
+                    {
+                        case "+":
+                            actionCode = Action.ADD;
+                            break;
+                        case "-":
+                            actionCode = Action.SUBTRACT;
+                            break;
+                        case "*":
+                            actionCode = Action.MULTIPLY;
+                            break;
+                        case "/":
+                            actionCode = Action.DIVIDE;
+                            break;
+                        case "%":
+                            actionCode = Action.MODULUS;
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
             else
             {

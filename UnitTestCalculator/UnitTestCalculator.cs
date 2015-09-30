@@ -28,9 +28,9 @@ namespace UnitTestSimpleCalculator
         public void TestSetConstants()
         {
             Calculator myCalc = new Calculator();
-            myCalc.Constants = new Dictionary<char, int>();
-            myCalc.Constants.Add('x', 3);
-            Assert.AreEqual(3, myCalc.Constants['x']);
+            myCalc.Constants = new Dictionary<string, int>();
+            myCalc.Constants.Add("x", 3);
+            Assert.AreEqual(3, myCalc.Constants["x"]);
         }
 
         [TestMethod]
