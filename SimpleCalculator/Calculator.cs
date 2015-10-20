@@ -140,21 +140,17 @@ namespace SimpleCalculator
 
         public Action ValidateInput(string currentInput)
         {
-            Action actionCode = Action.INVALID;
-            Match mathMatch;
-            Match keywordMatch;
-            Match constantMatch;
-            Match constantLookupMatch;
-            Match constantUseMatch1;
-            Match constantUseMatch2;
+            Action actionCode = Action.INVALID; // set the default return value
+            
+            // string literals to define the patterns of input we are looking for
+            String mathPattern = @"(\d+)\s*([-+*/%])\s*(\d+)"; // pattern for a basic math operation
+            String keywordPattern = @"\bexit\b|\bquit\b|\blast\b|\blastq\b"; // pattern for entering a keyword
+            String constantAssignPattern = @"([a-zA-Z])\s*([=])\s*(\d+)"; // pattern for assigning a constant value
+            String constantLookupPattern = @"^\s*([a-zA-Z])\s*$"; // pattern for looking up a pattern that is assigned
+            String constantUsePattern1 = @"(\d+)\s*([-+*/%])\s*([a-zA-Z])"; // pattern for using an constant in an expression; i.e., 1 + x
+            String constantUsePattern2 = @"([a-zA-Z])\s*([-+*/%])\s*(\d+)"; // pattern for using a constant in an expression; i.e., x + 1
 
-            String mathPattern = @"(\d+)\s*([-+*/%])\s*(\d+)";
-            String keywordPattern = @"\bexit\b|\bquit\b|\blast\b|\blastq\b";
-            String constantAssignPattern = @"([a-zA-Z])\s*([=])\s*(\d+)";
-            String constantLookupPattern = @"^\s*([a-zA-Z])\s*$";
-            String constantUsePattern1 = @"(\d+)\s*([-+*/%])\s*([a-zA-Z])";
-            String constantUsePattern2 = @"([a-zA-Z])\s*([-+*/%])\s*(\d+)";
-
+            Match mathMatch, keywordMatch, constantMatch, constantLookupMatch, constantUseMatch1, constantUseMatch2;
             mathMatch = Regex.Match(currentInput, mathPattern);
             keywordMatch = Regex.Match(currentInput, keywordPattern);
             constantMatch = Regex.Match(currentInput, constantAssignPattern);
@@ -162,9 +158,10 @@ namespace SimpleCalculator
             constantUseMatch1 = Regex.Match(currentInput, constantUsePattern1);
             constantUseMatch2 = Regex.Match(currentInput, constantUsePattern2);
 
-            string keyword = keywordMatch.Groups[0].Value;
+            
             if (keywordMatch.Success)
             {
+                string keyword = keywordMatch.Groups[0].Value;
                 switch (keyword)
                 {
                     case "exit":
@@ -272,7 +269,7 @@ namespace SimpleCalculator
             else if (constantUseMatch2.Success)
             {
                 // e.g., x + 1
-                Console.WriteLine("Inside constantUseMatch2");
+                //Console.WriteLine("Inside constantUseMatch2");
                 this.constantKey = constantUseMatch2.Groups[1].Value;
                 if (!Constants.ContainsKey(constantKey))
                 {
@@ -280,9 +277,9 @@ namespace SimpleCalculator
                 }
                 else
                 {
-                    this.value2 = int.Parse(constantUseMatch1.Groups[1].Value);
+                    this.value2 = int.Parse(constantUseMatch2.Groups[3].Value);
                     this.value1 = Constants[constantKey];
-                    switch (constantUseMatch1.Groups[2].Value)
+                    switch (constantUseMatch2.Groups[2].Value)
                     {
                         case "+":
                             actionCode = Action.ADD;
